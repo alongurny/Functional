@@ -1,31 +1,31 @@
 package fun;
 
-public abstract class Pair<F, S> {
+import java.util.function.BiFunction;
 
-	public interface Pattern<F, S, X> {
-		X matchPair(F first, S second);
+public final class Pair<F, S> {
+
+	public static <F, S> Pair<F, S> pair(F first, S second) {
+		return new Pair<>(first, second);
 	}
 
-	public static <F, B> Pair<F, B> pair(F first, B second) {
-		return new Pair<F, B>() {
-			@Override
-			public <X> X match(Pattern<F, B, X> pattern) {
-				return pattern.matchPair(first, second);
-			}
-		};
-	}
+	private final F first;
+	private final S second;
 
-	private Pair() {
+	private Pair(F first, S second) {
+		this.first = first;
+		this.second = second;
 	}
 
 	public F getFirst() {
-		return match((f, s) -> f);
+		return first;
 	}
 
 	public S getSecond() {
-		return match((f, s) -> s);
+		return second;
 	}
 
-	public abstract <X> X match(Pattern<F, S, X> pattern);
+	public <X> X match(BiFunction<F, S, X> pattern) {
+		return pattern.apply(first, second);
+	}
 
 }

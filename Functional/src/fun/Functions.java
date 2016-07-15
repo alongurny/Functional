@@ -24,4 +24,8 @@ public class Functions {
 	public static <A, B, X> BiFunction<A, B, X> uncurry(Function<A, Function<B, X>> f) {
 		return (a, b) -> f.apply(a).apply(b);
 	}
+
+	public static <A, B, C> Function<A, C> compose(Function<B, C> g, Function<A, B> f) {
+		return g.compose(f);
+	}
 }

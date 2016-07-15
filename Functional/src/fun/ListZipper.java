@@ -1,13 +1,9 @@
 package fun;
 
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public abstract class ListZipper<A> {
-
-	public interface Pattern<A, X> {
-		X matchZipper(List<A> left, List<A> right);
-	}
-
 	public static <A> ListZipper<A> fromList(List<A> list) {
 		return zipper(list, List.empty());
 	}
@@ -15,8 +11,8 @@ public abstract class ListZipper<A> {
 	public static <A> ListZipper<A> zipper(List<A> left, List<A> right) {
 		return new ListZipper<A>() {
 			@Override
-			public <X> X match(Pattern<A, X> pattern) {
-				return pattern.matchZipper(left, right);
+			public <X> X match(BiFunction<List<A>, List<A>, X> pattern) {
+				return pattern.apply(left, right);
 			}
 		};
 	}
@@ -40,14 +36,14 @@ public abstract class ListZipper<A> {
 		return match((left, right) -> zipper(left.map(f), right.map(f)));
 	}
 
-	public abstract <X> X match(Pattern<A, X> pattern);
+	public abstract <X> X match(BiFunction<List<A>, List<A>, X> pattern);
 
 	public Option<ListZipper<A>> moveLeft() {
-		return getRight().matchCons((h, t) -> Option.some(zipper(List.cons(h, getLeft()), t)), Option::none);
+		return getRight().match((h, t) -> Option.some(zipper(List.cons(h, getLeft()), t)), Option::none);
 	}
 
 	public Option<ListZipper<A>> moveRight() {
-		return getLeft().matchCons((h, t) -> Option.some(zipper(t, List.cons(h, getRight()))), Option::none);
+		return getLeft().match((h, t) -> Option.some(zipper(t, List.cons(h, getRight()))), Option::none);
 	}
 
 	@Override

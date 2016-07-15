@@ -12,18 +12,15 @@ public class Task<T> {
 
 	private Task(Supplier<T> supplier) {
 		result = Option.none();
-		new Thread(() -> {
-			T value = supplier.get();
-			this.result = Option.some(value);
-		}).start();
+		new Thread(() -> this.result = Option.some(supplier.get())).start();
 	}
 
-	public IO<T> getResult() {
-		return IO.wrap(() -> result.get());
+	public IO<Option<T>> getResult() {
+		return IO.wrap(() -> result);
 	}
 
-	public IO<Boolean> isFinished() {
-		return IO.wrap(() -> result.isSome());
+	public IO<Boolean> isDone() {
+		return getResult().map(Option::isSome);
 	}
 
 }

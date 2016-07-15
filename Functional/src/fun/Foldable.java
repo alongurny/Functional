@@ -21,12 +21,8 @@ public interface Foldable<A> {
 		return foldable.foldLeft(false, Boolean::logicalOr);
 	}
 
-	public static int product(Foldable<Integer> foldable) {
+	public static int productInt(Foldable<Integer> foldable) {
 		return foldable.foldLeft(1, (a, b) -> a * b);
-	}
-
-	public static int sum(Foldable<Integer> foldable) {
-		return foldable.foldLeft(0, (a, b) -> a + b);
 	}
 
 	default boolean allMatch(Predicate<A> predicate) {
@@ -42,7 +38,7 @@ public interface Foldable<A> {
 	}
 
 	default Option<A> foldLeft(BinaryOperator<A> f) {
-		return foldLeft(Option.none(), (r, t) -> r.matchSome(v -> Option.some(f.apply(v, t)), () -> Option.some(t)));
+		return foldLeft(Option.none(), (r, t) -> r.match(v -> Option.some(f.apply(v, t)), () -> Option.some(t)));
 	}
 
 	<X> X foldLeft(X initialValue, BiFunction<X, A, X> f);

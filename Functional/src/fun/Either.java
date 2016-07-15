@@ -2,66 +2,69 @@ package fun;
 
 import java.util.function.Function;
 
-public abstract class Either<L, R> {
+public final class Either<L, R> {
 
-	public interface Pattern<L, R, X> {
-		default X matchLeft(L value) {
-			return Bottom.undefined();
-		}
-
-		default X matchRight(R value) {
-			return Bottom.undefined();
-		}
+	private interface Constructor<L, R> {
+		<X> X match(Function<L, X> matchLeft, Function<R, X> matchRight);
 	}
 
 	public static <L, R> Either<L, R> left(L value) {
-		return new Either<L, R>() {
-			public <X> X match(Pattern<L, R, X> pattern) {
-				return pattern.matchLeft(value);
-			}
-		};
-	}
-
-	public static <L, R> Either<L, R> right(R value) {
-		return new Either<L, R>() {
-			public <X> X match(Pattern<L, R, X> pattern) {
-				return pattern.matchRight(value);
-			}
-		};
-	}
-
-	private Either() {
-	}
-
-	public <T, S> Either<T, S> bimap(Function<L, T> f, Function<R, S> g) {
-		return matchEither(value -> left(f.apply(value)), value -> right(g.apply(value)));
-	}
-
-	public boolean isLeft() {
-		return matchEither(value -> true, value -> false);
-	}
-
-	public boolean isRight() {
-		return matchEither(value -> false, value -> true);
-	}
-
-	public abstract <X> X match(Pattern<L, R, X> pattern);
-
-	public <X> X matchEither(Function<L, X> leftMatch, Function<R, X> rightMatch) {
-		return match(new Pattern<L, R, X>() {
-			public X matchLeft(L value) {
-				return leftMatch.apply(value);
-			}
-
-			public X matchRight(R value) {
-				return rightMatch.apply(value);
+		return new Either<L, R>(new Constructor<L, R>() {
+			public <X> X match(Function<L, X> matchLeft, Function<R, X> matchRight) {
+				return matchLeft.apply(value);
 			}
 		});
 	}
 
+	public static <L, R> Either<L, R> right(R value) {
+		return new Either<L, R>(new Constructor<L, R>() {
+			public <X> X match(Function<L, X> matchLeft, Function<R, X> matchRight) {
+				return matchRight.apply(value);
+			}
+		});
+	}
+
+	private Constructor<L, R> constructor;
+
+	private Either(Constructor<L, R> constructor) {
+		this.constructor = constructor;
+	}
+
+	public <T, S> Either<T, S> bimap(Function<L, T> leftMapper, Function<R, S> rightMapper) {
+		return match(value -> left(leftMapper.apply(value)), value -> right(rightMapper.apply(value)));
+	}
+
+	public boolean isLeft() {
+		return match(value -> true, value -> false);
+	}
+
+	public boolean isRight() {
+		return match(value -> false, value -> true);
+	}
+
+	public <T> Either<T, R> mapLeft(Function<L, T> mapper) {
+		return match(Functions.compose(Either::left, mapper), Either::right);
+	}
+
+	public <T> Either<T, R> bindLeft(Function<L, Either<T, R>> f) {
+		return match(f, Either::right);
+	}
+
+	public <T> Either<L, T> mapRight(Function<R, T> mapper) {
+		return match(Either::left, Functions.compose(Either::right, mapper));
+	}
+
+	public <T> Either<L, T> bindRight(Function<R, Either<L, T>> f) {
+		return match(Either::left, f);
+	}
+
+	public <X> X match(Function<L, X> matchLeft, Function<R, X> matchRight) {
+		return constructor.match(matchLeft, matchRight);
+	}
+
 	@Override
 	public String toString() {
-		return matchEither(value -> "Either.left(" + value + ")", value -> "Either.right(" + value + ")");
+		return match(value -> "Either.left(" + value + ")", value -> "Either.right(" + value + ")");
 	}
 
 }
