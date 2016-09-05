@@ -4,28 +4,35 @@ import java.util.function.BiFunction;
 
 public final class Pair<F, S> {
 
-	public static <F, S> Pair<F, S> pair(F first, S second) {
-		return new Pair<>(first, second);
+	private interface Constructor<F, S> {
+		<X> X match(BiFunction<F, S, X> pattern);
 	}
 
-	private final F first;
-	private final S second;
+	public static <F, S> Pair<F, S> pair(F first, S second) {
+		return new Pair<F, S>(new Constructor<F, S>() {
+			@Override
+			public <X> X match(BiFunction<F, S, X> pattern) {
+				return pattern.apply(first, second);
+			}
+		});
+	}
 
-	private Pair(F first, S second) {
-		this.first = first;
-		this.second = second;
+	private Constructor<F, S> constructor;
+
+	private Pair(Constructor<F, S> constructor) {
+		this.constructor = constructor;
 	}
 
 	public F getFirst() {
-		return first;
+		return match((first, second) -> first);
 	}
 
 	public S getSecond() {
-		return second;
+		return match((first, second) -> second);
 	}
 
 	public <X> X match(BiFunction<F, S, X> pattern) {
-		return pattern.apply(first, second);
+		return constructor.match(pattern);
 	}
 
 }
